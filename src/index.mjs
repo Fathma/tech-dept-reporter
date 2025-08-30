@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import process from 'process';
+import { Console } from 'node:console';
+const console = new Console(process.stdout, process.stderr);
 import fs from 'fs';
 import path from 'path';
 import * as glob from 'glob';
@@ -14,7 +17,7 @@ function scanFiles(rootDir) {
   const pkgFiles = glob.sync(path.join(rootDir, '**/package.json'));
   // Exclude all files in the CLI project from analysis
   // Exclude all files in the CLI project directory from analysis
-  const cliProjectDir = path.dirname(new URL(import.meta.url).pathname);
+  // const cliProjectDir = path.dirname(new URL(import.meta.url).pathname); // Not used, removed for compatibility
   const targetSrcDir = path.join(path.resolve(rootDir), 'src');
   tsFiles = tsFiles.filter(f => path.resolve(f).startsWith(targetSrcDir));
   jsFiles = jsFiles.filter(f => path.resolve(f).startsWith(targetSrcDir));
@@ -26,19 +29,23 @@ function runESLint(files) {
   try {
     // Only lint files in src folder, prefer .ts if no .js files
     // Determine the src directory of the target repo
-  // Run ESLint from the target directory and use relative patterns
-  const targetDir = path.dirname(files[0])?.split('src')[0] || process.argv[2] || '.';
-  const lintPatterns = [];
-  const hasJs = files.some(f => f.endsWith('.js'));
-  const hasTs = files.some(f => f.endsWith('.ts'));
-  if (hasJs) lintPatterns.push('src/**/*.js');
-  if (hasTs) lintPatterns.push('src/**/*.ts');
-  if (!lintPatterns.length) return 'No JS or TS files found to lint.';
-  const lintCmd = `npx eslint ${lintPatterns.join(' ')}`;
-  const result = execSync(lintCmd, { encoding: 'utf8', cwd: targetDir });
-  return result;
-  } catch (err) {
-    return err.stdout || err.message;
+    const targetDir = path.dirname(files[0])?.split('src')[0] || process.argv[2] || '.';
+    const lintPatterns = [];
+    const hasJs = files.some(f => f.endsWith('.js'));
+    const hasTs = files.some(f => f.endsWith('.ts'));
+    if (hasJs) lintPatterns.push('src/**/*.js');
+    if (hasTs) lintPatterns.push('src/**/*.ts');
+    if (!lintPatterns.length) return 'No JS or TS files found to lint.';
+    // Check for ESLint config file before running
+    const eslintConfigPath = path.join(targetDir, 'eslint.config.js');
+    if (!fs.existsSync(eslintConfigPath)) {
+      return 'Warning: ESLint config file (eslint.config.js) not found in target project. Skipping linting.\nSee https://eslint.org/docs/latest/use/configure/migration-guide for migration info.';
+    }
+    const lintCmd = `npx eslint ${lintPatterns.join(' ')}`;
+    const result = execSync(lintCmd, { encoding: 'utf8', cwd: targetDir });
+    return result;
+  } catch {
+    return 'Error running ESLint.';
   }
 }
 
@@ -122,7 +129,7 @@ async function main() {
   // GPT analysis for each file
   const gptResults = [];
   for (const file of [...files.tsFiles, ...files.jsFiles].slice(0, 3)) { // limit for demo
-    let code = fs.readFileSync(file, 'utf8');
+  const code = fs.readFileSync(file, 'utf8');
     // Limit code chunk to first 200 lines or 4000 characters
     const codeChunk = code.split('\n').slice(0, 200).join('\n').slice(0, 4000);
     const staticResult = lintResults.join('\n').slice(0, 2000);

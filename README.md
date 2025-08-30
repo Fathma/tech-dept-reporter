@@ -38,7 +38,7 @@ This allows the CLI to access your API key securely during execution.
 Run the CLI tool on a target project directory:
 
 ```bash
-NODE_NO_WARNINGS=1 OPENAI_API_KEY=$(grep OPENAI_API_KEY .env | cut -d '=' -f2) npx techdebt-scan /path/to/your/project
+NODE_NO_WARNINGS=1 npx techdebt-scan /path/to/your/project
 ```
 
 Or, if your environment variable is already set:
