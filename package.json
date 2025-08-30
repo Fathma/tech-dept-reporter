@@ -1,0 +1,29 @@
+{
+  "name": "tech-debt-reporter",
+  "version": "0.1.0",
+  "description": "CLI tool to scan repo for tech debt in TypeScript/JavaScript projects.",
+  "main": "src/index.mjs",
+  "bin": {
+    "techdebt-scan": "src/index.mjs"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+  "lint": "eslint src/**/*.js src/**/*.ts",
+    "build": "tsc"
+  },
+  "keywords": [
+    "tech debt",
+    "cli",
+    "typescript",
+    "eslint"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "chalk": "^5.6.0",
+    "eslint": "^9.34.0",
+    "glob": "^11.0.3",
+    "openai": "^4.104.0"
+  }
+}
